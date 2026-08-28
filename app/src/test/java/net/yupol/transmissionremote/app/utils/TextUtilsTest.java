@@ -54,6 +54,12 @@ public class TextUtilsTest {
     }
 
     @Test
+    public void testAbbreviateEmojiSequences() {
+        assertThat(TextUtils.abbreviate("👩‍💻 Developer")).isEqualTo("👩‍💻D");
+        assertThat(TextUtils.abbreviate("🇨🇦 Canada")).isEqualTo("🇨🇦C");
+    }
+
+    @Test
     public void testDisplayableSize() {
         assertThat(TextUtils.displayableSize(0)).isEqualTo("0.0 KB");
         assertThat(TextUtils.displayableSize(1)).isEqualTo("0.0 KB");

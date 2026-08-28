@@ -34,6 +34,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
@@ -224,11 +225,29 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
             }
     );
 
+    private final OnBackPressedCallback backPressedCallback = new OnBackPressedCallback(true) {
+        @Override
+        public void handleOnBackPressed() {
+            if (drawer.isDrawerOpen()) drawer.closeDrawer();
+            else if (searchMenuItem != null && searchMenuItem.isActionViewExpanded()) searchMenuItem.collapseActionView();
+            else if (binding.addTorrentButton.isExpanded()) binding.addTorrentButton.collapse();
+            else {
+                setEnabled(false);
+                try {
+                    getOnBackPressedDispatcher().onBackPressed();
+                } finally {
+                    setEnabled(true);
+                }
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
         application = TransmissionRemote.getApplication(this);
         super.onCreate(savedInstanceState);
+        getOnBackPressedDispatcher().addCallback(this, backPressedCallback);
         logAppStartupTime();
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
 
@@ -747,24 +766,22 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_turtle_mode:
-                application.setSpeedLimitEnabled(!application.isSpeedLimitEnabled());
-                updateTurtleModeActionIcon();
-                updateSpeedLimitServerPrefs();
-                return true;
-            case R.id.action_open_torrent:
-                new OpenByDialogFragment().show(getSupportFragmentManager(), TAG_OPEN_TORRENT_DIALOG);
-                return true;
-            case R.id.action_start_all_torrents:
-                startAllTorrents();
-                return true;
-            case R.id.action_pause_all_torrents:
-                pauseAllTorrents();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.action_turtle_mode) {
+            application.setSpeedLimitEnabled(!application.isSpeedLimitEnabled());
+            updateTurtleModeActionIcon();
+            updateSpeedLimitServerPrefs();
+            return true;
+        } else if (item.getItemId() == R.id.action_open_torrent) {
+            new OpenByDialogFragment().show(getSupportFragmentManager(), TAG_OPEN_TORRENT_DIALOG);
+            return true;
+        } else if (item.getItemId() == R.id.action_start_all_torrents) {
+            startAllTorrents();
+            return true;
+        } else if (item.getItemId() == R.id.action_pause_all_torrents) {
+            pauseAllTorrents();
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -835,14 +852,6 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
                 Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
             }
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (drawer.isDrawerOpen()) drawer.closeDrawer();
-        else if (searchMenuItem != null && searchMenuItem.isActionViewExpanded()) searchMenuItem.collapseActionView();
-        else if (binding.addTorrentButton.isExpanded()) binding.addTorrentButton.collapse();
-        else super.onBackPressed();
     }
 
     @Override

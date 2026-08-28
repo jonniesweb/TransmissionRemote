@@ -4,8 +4,6 @@ import androidx.annotation.Nullable;
 import androidx.core.text.HtmlCompat;
 
 import com.google.common.base.Strings;
-import com.vdurmont.emoji.EmojiManager;
-
 import net.yupol.transmissionremote.app.R;
 import net.yupol.transmissionremote.app.TransmissionRemote;
 
@@ -14,6 +12,7 @@ import java.net.URLDecoder;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import static java.util.Calendar.DAY_OF_YEAR;
 import static java.util.Calendar.YEAR;
@@ -31,9 +30,13 @@ public class TextUtils {
 
         StringBuilder builder = new StringBuilder();
         int i = 0;
-        while (i < words.length && builder.length() < 2) {
+        int symbolCount = 0;
+        while (i < words.length && symbolCount < 2) {
             String word = words[i].trim();
-            if (word.length() > 0) builder.append(firstSymbol(word).toUpperCase());
+            if (word.length() > 0) {
+                builder.append(firstSymbol(word).toUpperCase(Locale.getDefault()));
+                symbolCount++;
+            }
             i++;
         }
 
@@ -122,13 +125,50 @@ public class TextUtils {
     private static String firstSymbol(String str) {
         if (str.isEmpty()) return "";
 
-        for (int i = str.length(); i >= 1; i--) {
-            String chunk = str.substring(0, i);
-            if (EmojiManager.isEmoji(chunk)) return chunk;
+        int firstCodePoint = str.codePointAt(0);
+        int end = Character.charCount(firstCodePoint);
+
+        if (isRegionalIndicator(firstCodePoint) && end < str.length()) {
+            int nextCodePoint = str.codePointAt(end);
+            if (isRegionalIndicator(nextCodePoint)) {
+                end += Character.charCount(nextCodePoint);
+            }
         }
 
-        return new StringBuilder()
-                .appendCodePoint(str.codePointAt(0))
-                .toString();
+        while (end < str.length()) {
+            int codePoint = str.codePointAt(end);
+            if (codePoint == 0x200D && end + Character.charCount(codePoint) < str.length()) {
+                end += Character.charCount(codePoint);
+                int joinedCodePoint = str.codePointAt(end);
+                end += Character.charCount(joinedCodePoint);
+            } else if (isEmojiModifier(codePoint) || isVariationSelector(codePoint)
+                    || isCombiningMark(codePoint) || codePoint == 0x20E3) {
+                end += Character.charCount(codePoint);
+            } else {
+                break;
+            }
+        }
+
+        return str.substring(0, end);
+    }
+
+    private static boolean isRegionalIndicator(int codePoint) {
+        return codePoint >= 0x1F1E6 && codePoint <= 0x1F1FF;
+    }
+
+    private static boolean isEmojiModifier(int codePoint) {
+        return codePoint >= 0x1F3FB && codePoint <= 0x1F3FF;
+    }
+
+    private static boolean isVariationSelector(int codePoint) {
+        return (codePoint >= 0xFE00 && codePoint <= 0xFE0F)
+                || (codePoint >= 0xE0100 && codePoint <= 0xE01EF);
+    }
+
+    private static boolean isCombiningMark(int codePoint) {
+        int type = Character.getType(codePoint);
+        return type == Character.NON_SPACING_MARK
+                || type == Character.COMBINING_SPACING_MARK
+                || type == Character.ENCLOSING_MARK;
     }
 }

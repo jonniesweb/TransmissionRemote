@@ -1,8 +1,32 @@
 # Transmission Remote
-[![Get it on Google Play](http://emanual.github.io/Android-docs/images/brand/en_generic_rgb_wo_45.png)](https://play.google.com/store/apps/details?id=net.yupol.transmissionremote.app)
 
 Transmission Remote is an Android application which allows you to remotely control [Transmission BitTorrent client](https://www.transmissionbt.com).  
 It works through the web interface, so remote access must be enabled in Transmission preferences.
+
+This repository is a maintained fork of [y-polek/TransmissionRemote](https://github.com/y-polek/TransmissionRemote). Version 1.0.0 modernizes the app for current Android releases while retaining its existing application ID and saved-server compatibility.
+
+## Android support
+
+- Minimum Android version: Android 8.0 (API 26)
+- Target Android version: Android 16 (API 36)
+- Compile SDK: API 37
+- Build toolchain: Android Gradle Plugin 9.3.2, Gradle 9.5, Java 17, and KSP2
+
+Server connections require HTTPS with a certificate trusted by Android. Cleartext HTTP and user-installed certificate authorities are intentionally not trusted.
+
+## Build and test
+
+Install JDK 17 and Android SDK platform 37, then run:
+
+```sh
+./gradlew test lintDebug lintRelease assembleDebug assembleRelease
+```
+
+Run the instrumentation suite on an API 36 emulator with:
+
+```sh
+./gradlew connectedDebugAndroidTest
+```
 
 
 ## License

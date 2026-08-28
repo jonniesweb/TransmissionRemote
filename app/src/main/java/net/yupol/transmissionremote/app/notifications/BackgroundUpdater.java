@@ -10,11 +10,11 @@ public class BackgroundUpdater {
     public static void start(Context context) {
         boolean onlyUnmeteredNetwork = PreferenceManager.getDefaultSharedPreferences(context)
                 .getBoolean(context.getString(R.string.background_update_only_unmetered_wifi_key), true);
-        BackgroundUpdateJob.schedule(onlyUnmeteredNetwork);
+        BackgroundUpdateWorker.schedule(context, onlyUnmeteredNetwork);
     }
 
     public static void stop(Context context) {
-        BackgroundUpdateJob.cancelAll();
+        BackgroundUpdateWorker.cancel(context);
     }
 
     public static void restart(Context context) {

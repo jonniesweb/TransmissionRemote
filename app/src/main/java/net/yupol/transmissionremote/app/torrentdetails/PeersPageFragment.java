@@ -97,10 +97,9 @@ public class PeersPageFragment extends BasePageFragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_sort_peers:
-                showSortingList();
-                return true;
+        if (item.getItemId() == R.id.action_sort_peers) {
+            showSortingList();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

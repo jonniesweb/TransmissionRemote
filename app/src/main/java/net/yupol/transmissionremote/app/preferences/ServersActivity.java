@@ -99,43 +99,41 @@ public class ServersActivity extends BaseActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_add:
-                startActivityForResult(new Intent(this, AddServerActivity.class), REQUEST_CODE_NEW_SERVER);
-                return true;
-            case R.id.action_remove:
-                new AlertDialog.Builder(this)
-                    .setMessage(R.string.remove_server_confirmation)
-                    .setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            ServerDetailsFragment detailsFragment = (ServerDetailsFragment) getSupportFragmentManager().findFragmentByTag(TAG_SERVER_DETAILS);
-                            if (detailsFragment != null) {
-                                Server server = detailsFragment.getServerArgument();
-                                if (server != null) {
+        if (item.getItemId() == R.id.action_add) {
+            startActivityForResult(new Intent(this, AddServerActivity.class), REQUEST_CODE_NEW_SERVER);
+            return true;
+        } else if (item.getItemId() == R.id.action_remove) {
+            new AlertDialog.Builder(this)
+                .setMessage(R.string.remove_server_confirmation)
+                .setPositiveButton(R.string.remove, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        ServerDetailsFragment detailsFragment = (ServerDetailsFragment) getSupportFragmentManager().findFragmentByTag(TAG_SERVER_DETAILS);
+                        if (detailsFragment != null) {
+                            Server server = detailsFragment.getServerArgument();
+                            if (server != null) {
                                     app.removeServer(server);
-                                    onBackPressed();
-                                }
+                                    getOnBackPressedDispatcher().onBackPressed();
                             }
                         }
-                    })
-                    .setNegativeButton(android.R.string.no, null)
-                    .create().show();
-                return true;
-            case R.id.action_save:
-                ServerDetailsFragment detailsFragment = (ServerDetailsFragment) getSupportFragmentManager().findFragmentByTag(TAG_SERVER_DETAILS);
-                if (detailsFragment != null) {
+                    }
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .create().show();
+            return true;
+        } else if (item.getItemId() == R.id.action_save) {
+            ServerDetailsFragment detailsFragment = (ServerDetailsFragment) getSupportFragmentManager().findFragmentByTag(TAG_SERVER_DETAILS);
+            if (detailsFragment != null) {
                     detailsFragment.saveServer();
                     app.updateServer(detailsFragment.getServerArgument());
-                    onBackPressed();
-                    Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show();
-                } else {
-                    Log.e(TAG, "ServerDetailsFragment is not active while save server action performed");
-                }
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+                    getOnBackPressedDispatcher().onBackPressed();
+                Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show();
+            } else {
+                Log.e(TAG, "ServerDetailsFragment is not active while save server action performed");
+            }
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -156,6 +154,7 @@ public class ServersActivity extends BaseActivity {
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_NEW_SERVER) {
             if (resultCode == RESULT_OK) {
                 Server server = data.getParcelableExtra(AddServerActivity.EXTRA_SEVER);

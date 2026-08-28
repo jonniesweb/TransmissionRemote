@@ -1,7 +1,5 @@
 package net.yupol.transmissionremote.app.analytics
 
-import com.google.firebase.analytics.FirebaseAnalytics.Event
-import com.google.firebase.analytics.FirebaseAnalytics.Param
 import org.junit.Test
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
@@ -21,9 +19,9 @@ class AnalyticsTest {
 
         // then
         verify(analyticsProvider).logEvent(
-            Event.SCREEN_VIEW,
-            Param.SCREEN_NAME to "Main",
-            Param.SCREEN_CLASS to "MainScreen"
+            Analytics.EVENT_SCREEN_VIEW,
+            Analytics.PARAM_SCREEN_NAME to "Main",
+            Analytics.PARAM_SCREEN_CLASS to "MainScreen"
         )
     }
 

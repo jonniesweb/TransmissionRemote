@@ -300,13 +300,12 @@ public class OptionsPageFragment extends BasePageFragment implements AdapterView
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_save:
-                TorrentSetRequest.Builder requestBuilder = getSaveOptionsRequestBuilder();
-                if (requestBuilder.isChanged()) {
-                    sendUpdateOptionsRequest(requestBuilder.build());
-                }
-                return true;
+        if (item.getItemId() == R.id.action_save) {
+            TorrentSetRequest.Builder requestBuilder = getSaveOptionsRequestBuilder();
+            if (requestBuilder.isChanged()) {
+                sendUpdateOptionsRequest(requestBuilder.build());
+            }
+            return true;
         }
 
         return false;

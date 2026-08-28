@@ -7,13 +7,13 @@ import android.view.View;
 import android.widget.Button;
 
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
+import net.yupol.transmissionremote.app.BaseActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import net.yupol.transmissionremote.app.R;
 
-public class AddServerActivity extends AppCompatActivity {
+public class AddServerActivity extends BaseActivity {
 
     public static final String PARAM_CANCELABLE = "param_cancelable";
     public static final String EXTRA_SEVER = "extra_server";

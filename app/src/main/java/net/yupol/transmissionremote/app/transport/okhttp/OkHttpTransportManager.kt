@@ -1,6 +1,5 @@
 package net.yupol.transmissionremote.app.transport.okhttp
 
-import android.annotation.SuppressLint
 import android.os.Handler
 import android.os.Looper
 import com.google.api.client.json.JsonObjectParser
@@ -23,10 +22,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 import org.json.JSONObject
 import java.io.IOException
 import java.io.StringReader
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
-import javax.net.ssl.SSLContext
-import javax.net.ssl.X509TrustManager
 
 class OkHttpTransportManager(
     private val server: Server
@@ -39,25 +34,6 @@ class OkHttpTransportManager(
         }
         if (server.isAuthenticationEnabled) {
             authenticator(BasicAuthenticator(server.userName.orEmpty(), server.password.orEmpty()))
-        }
-        if (server.trustSelfSignedSslCert) {
-            // Create a trust manager that does not validate certificate chains
-            @SuppressLint("CustomX509TrustManager")
-            val trustAllManager = object : X509TrustManager {
-                @SuppressLint("TrustAllX509TrustManager")
-                override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
-                @SuppressLint("TrustAllX509TrustManager")
-                override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
-                override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-            }
-
-            // Install the all-trusting trust manager
-            val sslContext = SSLContext.getInstance("SSL")
-            sslContext.init(null, arrayOf(trustAllManager), SecureRandom())
-
-            // Create an ssl socket factory with our all-trusting manager
-            sslSocketFactory(sslContext.socketFactory, trustAllManager)
-            hostnameVerifier { _, _ -> true }
         }
     }.build()
 
@@ -90,11 +66,11 @@ class OkHttpTransportManager(
         okHttpClient.newCall(okHttpRequest).enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 try {
-                    val responseBody = response.body?.string()
+                    val responseBody = response.body.string()
                     request.setResponse(response.code, responseBody)
                     if (response.code in 200..299) {
-                        val responseJson = responseBody?.let(::JSONObject)
-                        val resultStatus = responseJson?.getString("result")
+                        val responseJson = JSONObject(responseBody)
+                        val resultStatus = responseJson.getString("result")
                         if (resultStatus != "success") {
                             throw ResponseFailureException(resultStatus)
                         }

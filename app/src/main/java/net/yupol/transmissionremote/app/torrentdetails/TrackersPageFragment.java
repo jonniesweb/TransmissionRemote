@@ -133,13 +133,12 @@ public class TrackersPageFragment extends BasePageFragment implements TrackersAd
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_add:
-                showEditTrackerUrlDialog(null);
-                return true;
-            case R.id.action_sort_trackers:
-                showSortingList();
-                return true;
+        if (item.getItemId() == R.id.action_add) {
+            showEditTrackerUrlDialog(null);
+            return true;
+        } else if (item.getItemId() == R.id.action_sort_trackers) {
+            showSortingList();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }

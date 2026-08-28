@@ -4,6 +4,7 @@ import android.os.Bundle;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.appcompat.app.ActionBar;
+import androidx.activity.OnBackPressedCallback;
 import android.util.Log;
 import android.view.MenuItem;
 
@@ -29,9 +30,30 @@ public class ServerPreferencesActivity extends BaseSpiceActivity implements Save
 
     private SessionSetRequest saveChangesRequest;
 
+    private final OnBackPressedCallback backPressedCallback = new OnBackPressedCallback(true) {
+        @Override
+        public void handleOnBackPressed() {
+            ServerPreferencesFragment fragment = (ServerPreferencesFragment)
+                    getSupportFragmentManager().findFragmentByTag(TAG_SERVER_PREFERENCES_FRAGMENT);
+            if (fragment == null) {
+                dispatchBackToBase();
+                return;
+            }
+
+            SessionSetRequest.Builder requestBuilder = fragment.getPreferencesRequestBuilder();
+            if (requestBuilder.isChanged()) {
+                saveChangesRequest = requestBuilder.build();
+                new SaveChangesDialogFragment().show(getFragmentManager(), TAG_SAVE_CHANGES_DIALOG);
+            } else {
+                dispatchBackToBase();
+            }
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getOnBackPressedDispatcher().addCallback(this, backPressedCallback);
         setContentView(R.layout.server_preferences_activity);
 
 
@@ -85,28 +107,10 @@ public class ServerPreferencesActivity extends BaseSpiceActivity implements Save
     }
 
     @Override
-    public void onBackPressed() {
-        ServerPreferencesFragment fragment = (ServerPreferencesFragment)
-                getSupportFragmentManager().findFragmentByTag(TAG_SERVER_PREFERENCES_FRAGMENT);
-        if (fragment == null) {
-            super.onBackPressed();
-            return;
-        }
-
-        SessionSetRequest.Builder requestBuilder = fragment.getPreferencesRequestBuilder();
-        if (requestBuilder.isChanged()) {
-            saveChangesRequest = requestBuilder.build();
-            new SaveChangesDialogFragment().show(getFragmentManager(), TAG_SAVE_CHANGES_DIALOG);
-        } else {
-            super.onBackPressed();
-        }
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                onBackPressed();
+                getOnBackPressedDispatcher().onBackPressed();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -117,12 +121,21 @@ public class ServerPreferencesActivity extends BaseSpiceActivity implements Save
     @Override
     public void onSavePressed() {
         getTransportManager().doRequest(saveChangesRequest, null);
-        super.onBackPressed();
+        dispatchBackToBase();
     }
 
     @Override
     public void onDiscardPressed() {
-        super.onBackPressed();
+        dispatchBackToBase();
+    }
+
+    private void dispatchBackToBase() {
+        backPressedCallback.setEnabled(false);
+        try {
+            getOnBackPressedDispatcher().onBackPressed();
+        } finally {
+            backPressedCallback.setEnabled(true);
+        }
     }
 
     private void showPreferencesFragment(ServerSettings settings) {

@@ -5,6 +5,7 @@ import android.content.DialogInterface
 import android.os.Bundle
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import androidx.core.os.BundleCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
@@ -15,7 +16,7 @@ import net.yupol.transmissionremote.app.model.json.TrackerStats
 class TrackerUrlDialog : DialogFragment() {
 
     private val tracker: TrackerStats? by lazy {
-        arguments?.getParcelable(KEY_TRACKER)
+        arguments?.let { BundleCompat.getParcelable(it, KEY_TRACKER, TrackerStats::class.java) }
     }
     private val listener: OnTrackerUrlEnteredListener by lazy {
         checkNotNull(parentFragment as? OnTrackerUrlEnteredListener ?: activity as? OnTrackerUrlEnteredListener) {

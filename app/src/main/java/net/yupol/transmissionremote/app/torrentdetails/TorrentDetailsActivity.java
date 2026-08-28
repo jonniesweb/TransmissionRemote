@@ -3,15 +3,20 @@ package net.yupol.transmissionremote.app.torrentdetails;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.ActionBar;
 import androidx.databinding.DataBindingUtil;
+import androidx.core.content.IntentCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.preference.PreferenceManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.viewpager.widget.ViewPager;
 
@@ -70,14 +75,24 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
     private TorrentDetailsLayoutBinding binding;
     private SharedPreferences sharedPreferences;
 
+    private final OnBackPressedCallback backPressedCallback = new OnBackPressedCallback(true) {
+        @Override
+        public void handleOnBackPressed() {
+            boolean handled = handleBackPressByFragments();
+            if (!handled) handleExit();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getOnBackPressedDispatcher().addCallback(this, backPressedCallback);
         binding = DataBindingUtil.setContentView(this, R.layout.torrent_details_layout);
+        applySystemBarInsets();
 
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(TorrentDetailsActivity.this);
 
-        torrent = getIntent().getParcelableExtra(EXTRA_TORRENT);
+        torrent = IntentCompat.getParcelableExtra(getIntent(), EXTRA_TORRENT, Torrent.class);
         setupPager();
 
         binding.pager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
@@ -99,6 +114,38 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
         if (shareMagnetMenuItem != null) {
             shareMagnetMenuItem.setEnabled(torrentInfo != null);
         }
+    }
+
+    private void applySystemBarInsets() {
+        int toolbarLeft = binding.toolbar.getPaddingLeft();
+        int toolbarTop = binding.toolbar.getPaddingTop();
+        int toolbarRight = binding.toolbar.getPaddingRight();
+        int toolbarBottom = binding.toolbar.getPaddingBottom();
+        int pagerLeft = binding.pager.getPaddingLeft();
+        int pagerTop = binding.pager.getPaddingTop();
+        int pagerRight = binding.pager.getPaddingRight();
+        int pagerBottom = binding.pager.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (view, windowInsets) -> {
+            Insets statusBars = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.displayCutout()
+            );
+            Insets navigationBars = windowInsets.getInsets(WindowInsetsCompat.Type.navigationBars());
+            binding.toolbar.setPadding(
+                    toolbarLeft + statusBars.left,
+                    toolbarTop + statusBars.top,
+                    toolbarRight + statusBars.right,
+                    toolbarBottom
+            );
+            binding.pager.setPadding(
+                    pagerLeft + navigationBars.left,
+                    pagerTop,
+                    pagerRight + navigationBars.right,
+                    pagerBottom + navigationBars.bottom
+            );
+            return windowInsets;
+        });
+        ViewCompat.requestApplyInsets(binding.getRoot());
     }
 
     @Override
@@ -135,7 +182,7 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
 
     private void showErrorAndExit() {
         Toast.makeText(TorrentDetailsActivity.this, R.string.error_retrieve_torrent_details, Toast.LENGTH_LONG).show();
-        onBackPressed();
+        getOnBackPressedDispatcher().onBackPressed();
     }
 
     @Override
@@ -221,13 +268,6 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
         return handleExit();
     }
 
-    @Override
-    public void onBackPressed() {
-        boolean handled = handleBackPressByFragments();
-        if (handled) return;
-        handleExit();
-    }
-
     private boolean handleExit() {
         if (torrentInfo == null) {
             finish();
@@ -265,40 +305,39 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_remove_torrents:
-                RemoveTorrentsDialogFragment.newInstance(torrent.getId())
-                        .show(getSupportFragmentManager(), RemoveTorrentsDialogFragment.TAG_REMOVE_TORRENTS_DIALOG);
-                return true;
-            case R.id.action_pause:
-                getTransportManager().doRequest(new StopTorrentRequest(torrent.getId()), null);
-                return true;
-            case R.id.action_start:
-                getTransportManager().doRequest(new StartTorrentRequest(torrent.getId()), null);
-                return true;
-            case R.id.action_start_now:
-                getTransportManager().doRequest(new StartTorrentRequest(new int[] { torrent.getId() }, true), null);
-                return true;
-            case R.id.action_rename:
-                RenameDialogFragment dialogFragment = RenameDialogFragment.newInstance(torrent.getId(), torrent.getName(), torrent.getName());
-                dialogFragment.show(getSupportFragmentManager(), RENAME_TORRENT_FRAGMENT_TAG);
-                return true;
-            case R.id.action_set_location:
-                ChooseLocationDialogFragment dialog = new ChooseLocationDialogFragment();
-                Bundle args = new Bundle();
-                args.putString(ChooseLocationDialogFragment.ARG_INITIAL_LOCATION, torrentInfo.getDownloadDir());
-                dialog.setArguments(args);
-                dialog.show(getSupportFragmentManager(), TAG_CHOOSE_LOCATION_DIALOG);
-                return true;
-            case R.id.action_verify:
-                getTransportManager().doRequest(new VerifyTorrentRequest(torrent.getId()), null);
-                return true;
-            case R.id.action_reannounce:
-                getTransportManager().doRequest(new ReannounceTorrentRequest(torrent.getId()), null);
-                return true;
-            case R.id.action_share_magnet:
-                shareMagnetLink();
-                return true;
+        if (item.getItemId() == R.id.action_remove_torrents) {
+            RemoveTorrentsDialogFragment.newInstance(torrent.getId())
+                    .show(getSupportFragmentManager(), RemoveTorrentsDialogFragment.TAG_REMOVE_TORRENTS_DIALOG);
+            return true;
+        } else if (item.getItemId() == R.id.action_pause) {
+            getTransportManager().doRequest(new StopTorrentRequest(torrent.getId()), null);
+            return true;
+        } else if (item.getItemId() == R.id.action_start) {
+            getTransportManager().doRequest(new StartTorrentRequest(torrent.getId()), null);
+            return true;
+        } else if (item.getItemId() == R.id.action_start_now) {
+            getTransportManager().doRequest(new StartTorrentRequest(new int[] { torrent.getId() }, true), null);
+            return true;
+        } else if (item.getItemId() == R.id.action_rename) {
+            RenameDialogFragment dialogFragment = RenameDialogFragment.newInstance(torrent.getId(), torrent.getName(), torrent.getName());
+            dialogFragment.show(getSupportFragmentManager(), RENAME_TORRENT_FRAGMENT_TAG);
+            return true;
+        } else if (item.getItemId() == R.id.action_set_location) {
+            ChooseLocationDialogFragment dialog = new ChooseLocationDialogFragment();
+            Bundle args = new Bundle();
+            args.putString(ChooseLocationDialogFragment.ARG_INITIAL_LOCATION, torrentInfo.getDownloadDir());
+            dialog.setArguments(args);
+            dialog.show(getSupportFragmentManager(), TAG_CHOOSE_LOCATION_DIALOG);
+            return true;
+        } else if (item.getItemId() == R.id.action_verify) {
+            getTransportManager().doRequest(new VerifyTorrentRequest(torrent.getId()), null);
+            return true;
+        } else if (item.getItemId() == R.id.action_reannounce) {
+            getTransportManager().doRequest(new ReannounceTorrentRequest(torrent.getId()), null);
+            return true;
+        } else if (item.getItemId() == R.id.action_share_magnet) {
+            shareMagnetLink();
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -309,12 +348,12 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
             TorrentSetRequest request = saveChangesRequests.valueAt(i);
             getTransportManager().doRequest(request, null);
         }
-        super.onBackPressed();
+        dispatchBackToBase();
     }
 
     @Override
     public void onDiscardPressed() {
-        super.onBackPressed();
+        dispatchBackToBase();
     }
 
     @Override
@@ -328,9 +367,18 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
 
             @Override
             public void onRequestSuccess(Void aVoid) {
-                TorrentDetailsActivity.super.onBackPressed();
+                dispatchBackToBase();
             }
         });
+    }
+
+    private void dispatchBackToBase() {
+        backPressedCallback.setEnabled(false);
+        try {
+            getOnBackPressedDispatcher().onBackPressed();
+        } finally {
+            backPressedCallback.setEnabled(true);
+        }
     }
 
     @Override

@@ -145,51 +145,50 @@ public class TorrentListFragment extends Fragment implements ChooseLocationDialo
 
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.action_remove_torrents:
-                    int[] torrentsToRemove = adapter.getSelectedItemsIds();
-                    RemoveTorrentsDialogFragment.newInstance(torrentsToRemove)
-                            .show(getChildFragmentManager(), RemoveTorrentsDialogFragment.TAG_REMOVE_TORRENTS_DIALOG);
-                    mode.finish();
-                    return true;
-                case R.id.action_select_all:
-                    if (adapter.getSelectedItemsCount() < adapter.getItemCount()) {
-                        adapter.selectAll();
-                    } else {
-                        adapter.clearSelection();
-                    }
-                    return true;
-                case R.id.action_pause:
-                    sendStopTorrentsRequest(adapter.getSelectedItemsIds());
-                    mode.finish();
-                    return true;
-                case R.id.action_start:
-                    sendStartTorrentsRequest(adapter.getSelectedItemsIds(), false);
-                    mode.finish();
-                    return true;
-                case R.id.action_start_now:
-                    sendStartTorrentsRequest(adapter.getSelectedItemsIds(), true);
-                    mode.finish();
-                    return true;
-                case R.id.action_rename:
-                    int[] selectedPositions = adapter.getSelectedItemsPositions();
-                    if (selectedPositions.length == 1) {
-                        Torrent torrent = adapter.getItemAtPosition(selectedPositions[0]);
-                        renameTorrent(torrent);
-                    }
-                    mode.finish();
-                    return true;
-                case R.id.action_set_location:
-                    showChooseLocationDialog();
-                    return true;
-                case R.id.action_verify:
-                    transportManager.doRequest(new VerifyTorrentRequest(adapter.getSelectedItemsIds()), null);
-                    mode.finish();
-                    return true;
-                case R.id.action_reannounce:
-                    transportManager.doRequest(new ReannounceTorrentRequest(adapter.getSelectedItemsIds()), null);
-                    mode.finish();
-                    return true;
+            if (item.getItemId() == R.id.action_remove_torrents) {
+                int[] torrentsToRemove = adapter.getSelectedItemsIds();
+                RemoveTorrentsDialogFragment.newInstance(torrentsToRemove)
+                        .show(getChildFragmentManager(), RemoveTorrentsDialogFragment.TAG_REMOVE_TORRENTS_DIALOG);
+                mode.finish();
+                return true;
+            } else if (item.getItemId() == R.id.action_select_all) {
+                if (adapter.getSelectedItemsCount() < adapter.getItemCount()) {
+                    adapter.selectAll();
+                } else {
+                    adapter.clearSelection();
+                }
+                return true;
+            } else if (item.getItemId() == R.id.action_pause) {
+                sendStopTorrentsRequest(adapter.getSelectedItemsIds());
+                mode.finish();
+                return true;
+            } else if (item.getItemId() == R.id.action_start) {
+                sendStartTorrentsRequest(adapter.getSelectedItemsIds(), false);
+                mode.finish();
+                return true;
+            } else if (item.getItemId() == R.id.action_start_now) {
+                sendStartTorrentsRequest(adapter.getSelectedItemsIds(), true);
+                mode.finish();
+                return true;
+            } else if (item.getItemId() == R.id.action_rename) {
+                int[] selectedPositions = adapter.getSelectedItemsPositions();
+                if (selectedPositions.length == 1) {
+                    Torrent torrent = adapter.getItemAtPosition(selectedPositions[0]);
+                    renameTorrent(torrent);
+                }
+                mode.finish();
+                return true;
+            } else if (item.getItemId() == R.id.action_set_location) {
+                showChooseLocationDialog();
+                return true;
+            } else if (item.getItemId() == R.id.action_verify) {
+                transportManager.doRequest(new VerifyTorrentRequest(adapter.getSelectedItemsIds()), null);
+                mode.finish();
+                return true;
+            } else if (item.getItemId() == R.id.action_reannounce) {
+                transportManager.doRequest(new ReannounceTorrentRequest(adapter.getSelectedItemsIds()), null);
+                mode.finish();
+                return true;
             }
             return false;
         }
@@ -406,7 +405,7 @@ public class TorrentListFragment extends Fragment implements ChooseLocationDialo
 
         public TorrentsAdapter(Context context) {
             this.context = context;
-            accentColor = ColorUtils.resolveColor(context, R.attr.colorAccent, R.color.accent);
+            accentColor = ColorUtils.resolveColor(context, androidx.appcompat.R.attr.colorAccent, R.color.accent);
         }
 
         public void setTorrents(List<Torrent> torrents) {
@@ -464,19 +463,24 @@ public class TorrentListFragment extends Fragment implements ChooseLocationDialo
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
-            final Torrent torrent = getItemAtPosition(position);
+            int adapterPosition = holder.getBindingAdapterPosition();
+            if (adapterPosition == RecyclerView.NO_POSITION) return;
+            final Torrent torrent = getItemAtPosition(adapterPosition);
             holder.setTorrent(torrent);
             holder.pauseResumeBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    int adapterPosition = holder.getBindingAdapterPosition();
+                    if (adapterPosition == RecyclerView.NO_POSITION) return;
+                    Torrent currentTorrent = getItemAtPosition(adapterPosition);
                     PlayPauseButton btn = (PlayPauseButton) v;
                     boolean wasPaused = btn.isPaused();
                     btn.toggle();
 
                     Request<Void> request = wasPaused
-                            ? new StartTorrentRequest(Collections.singletonList(torrent))
-                            : new StopTorrentRequest(Collections.singletonList(torrent));
-                    sendRequestAndUpdateTorrents(request, torrent.getId());
+                            ? new StartTorrentRequest(Collections.singletonList(currentTorrent))
+                            : new StopTorrentRequest(Collections.singletonList(currentTorrent));
+                    sendRequestAndUpdateTorrents(request, currentTorrent.getId());
                 }
             });
 
@@ -571,7 +575,7 @@ public class TorrentListFragment extends Fragment implements ChooseLocationDialo
                 }
             }
 
-            holder.selectedOverlay.setVisibility(isSelected(position) ? View.VISIBLE : View.INVISIBLE);
+            holder.selectedOverlay.setVisibility(isSelected(adapterPosition) ? View.VISIBLE : View.INVISIBLE);
         }
 
         public int getSelectedItemsCount() {

@@ -13,7 +13,7 @@ import androidx.appcompat.widget.ListPopupWindow;
 import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.buildware.widget.indeterm.IndeterminateCheckBox;
+import com.google.android.material.checkbox.MaterialCheckBox;
 
 import net.yupol.transmissionremote.app.R;
 import net.yupol.transmissionremote.app.databinding.FileItemBinding;
@@ -72,13 +72,12 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.View
         @DrawableRes int iconRes = 0;
         long bytesCompleted = 0;
         long filesLength = 0;
-        switch (viewType) {
-            case R.id.view_type_directory:
+        if (viewType == R.id.view_type_directory) {
                 Dir dir = getDir(position);
                 holder.binding.setDir(dir);
 
                 boolean isDirectoryCompleted = isDirectoryCompleted(dir);
-                holder.binding.checkbox.setState(isDirectoryChecked(dir));
+                holder.binding.checkbox.setCheckedState(toCheckedState(isDirectoryChecked(dir)));
                 holder.binding.checkbox.setEnabled(!isDirectoryCompleted);
 
                 Set<Integer> priorities = dirPriorities(dir);
@@ -101,8 +100,7 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.View
                 filesLength = calculateFilesLengthInDir(dir);
 
                 iconRes = R.drawable.ic_file_type_folder;
-                break;
-            case R.id.view_type_file:
+        } else if (viewType == R.id.view_type_file) {
                 File file = getFile(position);
                 FileStat fileStat = getFileStat(position);
                 holder.binding.setFile(file);
@@ -124,7 +122,6 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.View
                 filesLength = file.getLength();
 
                 iconRes = FileType.byFileName(file.getName()).iconRes;
-                break;
         }
 
         String stats = String.format(Locale.getDefault(), "%s of %s (%d%%)",
@@ -139,6 +136,17 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.View
 
     private boolean isFileChecked(int position) {
         return isFileChecked(getFile(position), getFileStat(position));
+    }
+
+    private static int toCheckedState(@Nullable Boolean checked) {
+        if (checked == null) return MaterialCheckBox.STATE_INDETERMINATE;
+        return checked ? MaterialCheckBox.STATE_CHECKED : MaterialCheckBox.STATE_UNCHECKED;
+    }
+
+    @Nullable
+    private static Boolean fromCheckedState(int checkedState) {
+        if (checkedState == MaterialCheckBox.STATE_INDETERMINATE) return null;
+        return checkedState == MaterialCheckBox.STATE_CHECKED;
     }
 
     private boolean isFileChecked(File file, FileStat fileStat) {
@@ -295,9 +303,10 @@ public class DirectoryAdapter extends RecyclerView.Adapter<DirectoryAdapter.View
                     }
                 }
             });
-            binding.checkbox.setOnStateChangedListener(new IndeterminateCheckBox.OnStateChangedListener() {
+            binding.checkbox.addOnCheckedStateChangedListener(new MaterialCheckBox.OnCheckedStateChangedListener() {
                 @Override
-                public void onStateChanged(IndeterminateCheckBox buttonView, @Nullable Boolean isChecked) {
+                public void onCheckedStateChangedListener(@NonNull MaterialCheckBox buttonView, int checkedState) {
+                    Boolean isChecked = fromCheckedState(checkedState);
                     if (getItemViewType() == R.id.view_type_directory) {
                         boolean changed = isChecked != isDirectoryChecked(getDir(getAdapterPosition()));
                         if (isChecked != null && changed) listener.onDirectoryChecked(getAdapterPosition(), isChecked);

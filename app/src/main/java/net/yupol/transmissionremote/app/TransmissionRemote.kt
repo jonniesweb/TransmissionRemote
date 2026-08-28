@@ -8,18 +8,16 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Build
-import android.preference.PreferenceManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import com.evernote.android.job.JobManager
+import androidx.preference.PreferenceManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import net.yupol.transmissionremote.app.analytics.Analytics
 import net.yupol.transmissionremote.app.filtering.Filter
 import net.yupol.transmissionremote.app.filtering.Filters
 import net.yupol.transmissionremote.app.model.json.Torrent
-import net.yupol.transmissionremote.app.notifications.BackgroundUpdateJob
 import net.yupol.transmissionremote.app.notifications.BackgroundUpdater
 import net.yupol.transmissionremote.app.preferences.PreferencesRepository
 import net.yupol.transmissionremote.app.server.Server
@@ -101,15 +99,13 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
         restore()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
         sharedPreferences.registerOnSharedPreferenceChangeListener(this)
-        JobManager.create(this)
-            .addJobCreator(BackgroundUpdateJob.Creator())
         if (isNotificationEnabled) {
             BackgroundUpdater.start(this)
         }
         createNotificationChannel()
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         if (key == getString(R.string.torrent_finished_notification_enabled_key)) {
             if (isNotificationEnabled) {
                 BackgroundUpdater.start(this)

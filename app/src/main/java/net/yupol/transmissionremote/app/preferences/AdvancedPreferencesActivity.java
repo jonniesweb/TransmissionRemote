@@ -3,10 +3,10 @@ package net.yupol.transmissionremote.app.preferences;
 import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
+import net.yupol.transmissionremote.app.BaseActivity;
 import android.view.MenuItem;
 
-public class AdvancedPreferencesActivity extends AppCompatActivity {
+public class AdvancedPreferencesActivity extends BaseActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

@@ -97,13 +97,12 @@ public class ServerPreferencesFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_save:
-                SessionSetRequest.Builder builder = getPreferencesRequestBuilder();
-                if (builder.isChanged()) {
-                    sendUpdateOptionsRequest(builder.build());
-                }
-                return true;
+        if (item.getItemId() == R.id.action_save) {
+            SessionSetRequest.Builder builder = getPreferencesRequestBuilder();
+            if (builder.isChanged()) {
+                sendUpdateOptionsRequest(builder.build());
+            }
+            return true;
         }
         return false;
     }

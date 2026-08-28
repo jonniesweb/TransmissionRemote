@@ -37,4 +37,7 @@
                     <!-- FAB -->
     <color name="fab_title_background_color">#eb646464</color>
     <color name="fab_overlay_color">#CCFFFFFF</color>
+
+    <color name="download_speed">#00C853</color>
+    <color name="upload_speed">#D50000</color>
 </resources>
