@@ -1,6 +1,7 @@
 name: Unit Tests and Android Quality
 
 on:
+  workflow_dispatch:
   push:
     branches: [ "develop" ]
   pull_request:
